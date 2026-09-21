@@ -1,0 +1,59 @@
+---
+# Service for api-service
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-service
+  namespace: cost-demo
+  labels:
+    app: api-service
+    project: k8s-cost-optimization
+spec:
+  selector:
+    app: api-service
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: ClusterIP
+
+---
+# Service for background-worker (headless – no HTTP port needed)
+apiVersion: v1
+kind: Service
+metadata:
+  name: background-worker
+  namespace: cost-demo
+  labels:
+    app: background-worker
+    project: k8s-cost-optimization
+spec:
+  selector:
+    app: background-worker
+  ports:
+    - name: metrics
+      protocol: TCP
+      port: 9090
+      targetPort: 9090
+  type: ClusterIP
+
+---
+# Service for report-service
+apiVersion: v1
+kind: Service
+metadata:
+  name: report-service
+  namespace: cost-demo
+  labels:
+    app: report-service
+    project: k8s-cost-optimization
+spec:
+  selector:
+    app: report-service
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: ClusterIP

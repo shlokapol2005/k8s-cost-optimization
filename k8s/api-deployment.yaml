@@ -1,0 +1,98 @@
+# =============================================================================
+# api-deployment.yaml  —  Workload A: Web API
+# =============================================================================
+# Architecture: Load Generator → API Service → (writes to) Redis Queue
+#               background-worker ← reads from Redis Queue
+#
+# Since Redis adds complexity, we use a simpler self-contained design:
+#   - api-service: nginx responding to HTTP (measurable load)
+#   - background-worker: polls the api-service endpoint and does CPU work
+#                        proportional to the number of responses received
+#
+# This means: more HTTP load → more work for the worker → higher CPU reading
+# =============================================================================
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: cost-demo
+data:
+  default.conf: |
+    server {
+        listen 8080;
+
+        location / {
+            return 200 '{"service":"api-service","status":"ok","phase":"baseline","jobs_pending":true}';
+            add_header Content-Type application/json;
+        }
+
+        location /health {
+            return 200 'OK';
+            add_header Content-Type text/plain;
+        }
+
+        # Worker polls this endpoint to pick up work
+        location /work {
+            return 200 '{"task":"process","iterations":10000}';
+            add_header Content-Type application/json;
+        }
+    }
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-service
+  namespace: cost-demo
+  labels:
+    app: api-service
+    project: k8s-cost-optimization
+    phase: baseline
+  annotations:
+    description: "Web API – over-provisioned (500m CPU / 512Mi RAM) for baseline demo"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api-service
+  template:
+    metadata:
+      labels:
+        app: api-service
+        project: k8s-cost-optimization
+        phase: baseline
+    spec:
+      containers:
+        - name: api-service
+          image: nginx:1.25-alpine
+          ports:
+            - containerPort: 8080
+          # ── BASELINE (intentionally over-provisioned) ─────────────────────
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+          # ─────────────────────────────────────────────────────────────────
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/conf.d
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: nginx-config

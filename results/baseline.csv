@@ -1,0 +1,7 @@
+timestamp,workload,cpu_request,mem_request,cpu_limit,mem_limit,cpu_used_m,mem_used_mi,phase
+# This file will be populated when you run: bash scripts/collect-baseline.sh
+# Example row (DO NOT use these numbers — run the script to get real values):
+# 2024-01-01T00:00:00Z,api-service,500m,512Mi,1000m,1Gi,80,120,baseline
+2026-09-21T08:47:42Z,api-service,500m,512Mi,1000m,1Gi,1,12,baseline
+2026-09-21T08:47:42Z,background-worker,1000m,1Gi,2000m,2Gi,82,0,baseline
+2026-09-21T08:47:42Z,report-service,2000m,2Gi,4000m,4Gi,1,12,baseline

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cost-demo
+  labels:
+    app.kubernetes.io/managed-by: "kubectl"
+    project: "k8s-cost-optimization"
+    environment: "demo"

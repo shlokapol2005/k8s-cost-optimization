@@ -1,0 +1,54 @@
+=========================================================
+  KUBERNETES RESOURCE OPTIMIZATION — BEFORE vs AFTER
+  Source: results/baseline.csv  vs  results/optimized.csv
+  Cost figures: from OpenCost API (measured, not estimated)
+=========================================================
+
+IMPORTANT — Cost Disclaimer:
+  Values below are ESTIMATED resource allocation costs
+  based on a custom pricing model applied to local
+  Minikube resource usage. They do not represent an
+  actual cloud billing amount. The pricing model uses
+  approximate AWS us-east-1 t3.medium on-demand rates:
+    CPU:    $0.031611 per CPU-hour
+    Memory: $0.004237 per GiB-hour
+
+=========================================================
+
+Workload-level changes:
+-----------------------------------------------------------
+WORKLOAD          CPU REQUEST     MEM REQUEST     CPU USED    MEM USED
+-----------------------------------------------------------
+api-service       500m → 5m       512Mi → 20Mi    1m          12Mi
+                  (↓ 99%)         (↓ 96%)
+background-worker 1000m → 110m   1Gi → 32Mi      82m → 1m    ~0Mi
+                  (↓ 89%)         (↓ 97%)
+report-service    2000m → 5m      2Gi → 20Mi      1m          12Mi
+                  (↓ 99.8%)       (↓ 99%)
+-----------------------------------------------------------
+TOTAL             3500m → 120m    ~3.5Gi → 72Mi
+                  (↓ 96.6%)       (↓ 98%)
+-----------------------------------------------------------
+
+OpenCost — cost-demo namespace (MEASURED from API):
+-----------------------------------------------------------
+                  BEFORE              AFTER           CHANGE
+CPU Cost:         $0.105370/hr        $0.000530/hr    ↓ 99.5%
+Memory Cost:      $0.014120/hr        $0.000050/hr    ↓ 99.6%
+TOTAL COST:       $0.119490/hr        $0.000580/hr    ↓ 99.5%
+-----------------------------------------------------------
+
+Cluster Efficiency (OpenCost):
+  BEFORE: 3.5%
+  AFTER:  8.7%
+  Change: +5.2 percentage points
+
+Annualised saving estimate (cost-demo namespace only):
+  Hourly saving:  $0.119490 - $0.000580 = $0.118910/hr
+  Daily saving:   $0.118910 × 24        = $2.854/day
+  Monthly saving: $0.118910 × 730       = $86.80/month
+  Yearly saving:  $0.118910 × 8760      = $1041.85/year
+
+NOTE: Annualised figures are illustrative only.
+      Scale proportionally for actual cloud node counts.
+=========================================================

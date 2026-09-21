@@ -1,0 +1,5 @@
+timestamp,workload,cpu_request,mem_request,cpu_limit,mem_limit,cpu_used_m,mem_used_mi,phase
+# Populated by: bash scripts/collect-after.sh
+2026-09-21T11:33:40Z,api-service,5m,20Mi,10m,40Mi,1,12,optimized
+2026-09-21T11:33:40Z,background-worker,110m,32Mi,220m,64Mi,1,0,optimized
+2026-09-21T11:33:40Z,report-service,5m,20Mi,10m,40Mi,1,12,optimized

@@ -1,0 +1,65 @@
+# =============================================================================
+# OpenCost Helm values
+# Reference: https://www.opencost.io/docs/installation/helm
+# =============================================================================
+#
+# IMPORTANT — Prometheus service name:
+#   Before installing OpenCost, find the actual Prometheus service name:
+#
+#     kubectl get svc -n monitoring | grep prometheus
+#
+#   The kube-prometheus-stack creates a service typically named:
+#     kube-prom-stack-kube-prome-prometheus  (port 9090)
+#   or simply:
+#     prometheus-operated                    (port 9090)
+#
+#   Check with: kubectl get svc -n monitoring
+#   Then update opencost.prometheus.internal.serviceName below to match.
+#
+# IMPORTANT — OpenCost ports:
+#   UI  → http://localhost:9090  (port-forward 9090:9090)
+#   API → http://localhost:9003  (port-forward 9003:9003)
+#
+# =============================================================================
+
+opencost:
+  exporter:
+    defaultClusterId: "minikube-cost-demo"
+
+  prometheus:
+    internal:
+      enabled: true
+      namespaceName: monitoring
+      port: 9090
+      # ⚠️  VERIFY THIS VALUE before applying:
+      #     Run: kubectl get svc -n monitoring
+      #     Look for the Prometheus service (usually ends in -prometheus or -operated)
+      #     Replace the value below with the exact service name you see.
+      serviceName: "kube-prom-stack-kube-prome-prometheus"  # verified: kubectl get svc -n monitoring
+
+  ui:
+    enabled: true
+    # UI is served on port 9090 (not 9003)
+    # API/server runs on port 9003
+    # See: https://www.opencost.io/docs/installation/ui
+
+# =============================================================================
+# Cost disclaimer (important for report and viva):
+#   "Since the experiment is conducted on a local Minikube cluster rather than
+#    a cloud provider, OpenCost values represent estimated resource allocation
+#    costs based on the configured pricing model and should not be interpreted
+#    as an actual cloud billing amount."
+# =============================================================================
+customPricing:
+  enabled: true
+  provider: "custom"
+  description: "Local Minikube estimated pricing (approximate AWS us-east-1 t3.medium rates)"
+  CPU: "0.031611"       # USD per CPU-hour
+  RAM: "0.004237"       # USD per GiB-hour
+  storage: "0.000138"   # USD per GiB-hour
+  GPU: "0.0"
+  spotCPU: "0.006655"
+  spotRAM: "0.000892"
+  internetEgress: "0.12"
+  zoneNetworkEgress: "0.01"
+  regionNetworkEgress: "0.01"

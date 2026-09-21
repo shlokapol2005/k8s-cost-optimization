@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: report-service
+  namespace: cost-demo
+  labels:
+    app: report-service
+    project: k8s-cost-optimization
+    phase: baseline
+  annotations:
+    description: "Report service – MOST over-provisioned workload, primary optimization target"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: report-service
+  template:
+    metadata:
+      labels:
+        app: report-service
+        project: k8s-cost-optimization
+        phase: baseline
+    spec:
+      containers:
+        - name: report-service
+          image: nginx:1.25-alpine
+          ports:
+            - containerPort: 8080
+          # ── BASELINE (EXTREMELY over-provisioned – main demo target) ──────
+          resources:
+            requests:
+              cpu: "2000m"
+              memory: "2Gi"
+            limits:
+              cpu: "4000m"
+              memory: "4Gi"
+          # ─────────────────────────────────────────────────────────────────
+          volumeMounts:
+            - name: report-nginx-config
+              mountPath: /etc/nginx/conf.d
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: report-nginx-config
+          configMap:
+            name: report-nginx-config
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: report-nginx-config
+  namespace: cost-demo
+data:
+  default.conf: |
+    server {
+        listen 8080;
+        location / {
+            return 200 '{"service":"report-service","status":"ok","phase":"baseline","note":"over-provisioned"}';
+            add_header Content-Type application/json;
+        }
+        location /health {
+            return 200 'OK';
+            add_header Content-Type text/plain;
+        }
+    }

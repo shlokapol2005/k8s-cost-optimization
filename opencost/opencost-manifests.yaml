@@ -1,0 +1,156 @@
+---
+# =============================================================================
+# opencost-manifests.yaml
+# OpenCost installed via direct manifests (no Helm chart download needed).
+# Prometheus URL: kube-prom-stack-kube-prome-prometheus.monitoring.svc:9090
+# =============================================================================
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: opencost
+  namespace: opencost
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: opencost
+rules:
+  - apiGroups: [""]
+    resources:
+      - configmaps
+      - deployments
+      - nodes
+      - pods
+      - services
+      - resourcequotas
+      - replicationcontrollers
+      - limitranges
+      - persistentvolumeclaims
+      - persistentvolumes
+      - namespaces
+      - endpoints
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["extensions", "apps"]
+    resources: ["daemonsets", "deployments", "statefulsets", "replicasets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["batch"]
+    resources: ["cronjobs", "jobs"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["autoscaling"]
+    resources: ["horizontalpodautoscalers"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["policy"]
+    resources: ["poddisruptionbudgets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["storageclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["events.k8s.io"]
+    resources: ["events"]
+    verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: opencost
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: opencost
+subjects:
+  - kind: ServiceAccount
+    name: opencost
+    namespace: opencost
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opencost
+  namespace: opencost
+  labels:
+    app: opencost
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opencost
+  template:
+    metadata:
+      labels:
+        app: opencost
+    spec:
+      serviceAccountName: opencost
+      containers:
+        # ── OpenCost cost model (backend) ─────────────────────────────────────
+        - name: opencost
+          image: ghcr.io/opencost/opencost:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 9003
+              name: http
+          env:
+            - name: PROMETHEUS_SERVER_ENDPOINT
+              value: "http://kube-prom-stack-kube-prome-prometheus.monitoring.svc:9090"
+            - name: CLUSTER_ID
+              value: "minikube-cost-demo"
+            - name: CLOUD_PROVIDER_API_KEY
+              value: "AIzaSyD29bGxmHAVEOBYtgd8sYM2gM2ekfxQX4Q"
+            # Custom pricing — approximate AWS us-east-1 t3.medium rates
+            - name: CPU_PRICE
+              value: "0.031611"
+            - name: MEMORY_PRICE
+              value: "0.004237"
+            - name: STORAGE_PRICE
+              value: "0.000138"
+          resources:
+            requests:
+              cpu: 10m
+              memory: 55Mi
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 9003
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 9003
+            initialDelaySeconds: 30
+            periodSeconds: 10
+
+        # ── OpenCost UI (frontend) ────────────────────────────────────────────
+        - name: opencost-ui
+          image: ghcr.io/opencost/opencost-ui:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 9090
+              name: ui
+          resources:
+            requests:
+              cpu: 10m
+              memory: 55Mi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: opencost
+  namespace: opencost
+  labels:
+    app: opencost
+spec:
+  selector:
+    app: opencost
+  ports:
+    - name: http-api
+      port: 9003
+      targetPort: 9003
+    - name: http-ui
+      port: 9090
+      targetPort: 9090
+  type: ClusterIP

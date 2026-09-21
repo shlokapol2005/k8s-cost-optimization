@@ -1,0 +1,31 @@
+# .gitignore for k8s-cost-optimization project
+
+# Results — CSV files with real data (commit intentionally)
+# results/*.csv   ← NOT ignored, we want these in git
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Secrets / credentials (never commit these)
+*.key
+*.pem
+*.env
+.env*
+secrets/
+
+# Screenshots — can be large; add selectively
+# screenshots/   ← NOT ignored; add your screenshots
+
+# Temporary files
+*.tmp
+*.log
+scratch/

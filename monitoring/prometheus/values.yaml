@@ -1,0 +1,59 @@
+# Prometheus configuration values for kube-prometheus-stack Helm chart.
+# Reference: https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack
+
+prometheus:
+  prometheusSpec:
+    # Scrape everything in the cluster (matches OpenCost service monitors too)
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    scrapeInterval: 30s
+    evaluationInterval: 30s
+    retention: 7d
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 5Gi
+
+grafana:
+  enabled: true
+  adminPassword: "devops-demo-2024"    # change for production!
+  service:
+    type: NodePort
+    nodePort: 32000
+  persistence:
+    enabled: true
+    size: 1Gi
+  # Pre-load the OpenCost dashboard and our custom dashboard
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: "cost-optimization"
+          orgId: 1
+          folder: "Cost Optimization"
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/cost-optimization
+  dashboardsConfigMaps:
+    cost-optimization: "grafana-dashboards"
+  grafana.ini:
+    server:
+      root_url: "http://localhost:32000"
+    auth.anonymous:
+      enabled: true
+      org_role: Viewer
+
+alertmanager:
+  enabled: false   # not required for this demo
+
+nodeExporter:
+  enabled: true
+
+kubeStateMetrics:
+  enabled: true
