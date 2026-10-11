@@ -33,7 +33,7 @@ jobs:
       - name: Lint YAML with yamllint
         run: |
           pip install yamllint
-          yamllint -d relaxed k8s/ monitoring/ opencost/ || true
+          yamllint -d relaxed k8s/ monitoring/ opencost/
 
   # ──────────────────────────────────────────────────────────────────────────
   # JOB 2: Validate shell scripts
@@ -51,7 +51,7 @@ jobs:
       - name: Lint shell scripts
         run: |
           echo "=== Linting shell scripts ==="
-          find scripts/ load-testing/ -name "*.sh" -exec shellcheck --severity=warning {} \; || true
+          find scripts/ load-testing/ -name "*.sh" -exec shellcheck --severity=warning {} \;
           echo "=== Script linting complete ==="
 
   # ──────────────────────────────────────────────────────────────────────────
